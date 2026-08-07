@@ -1,0 +1,60 @@
+# --- Сборка ---------------------------------------------------------------
+build/
+out/
+bin/
+.gradle/
+# Wrapper коммитим целиком (jar в том числе) — без него репозиторий не собрать
+!gradle/wrapper/gradle-wrapper.jar
+gradle-app.setting
+.gradletasknamecache
+
+# --- Рабочие папки игры ---------------------------------------------------
+# Их создают run-конфигурации из gradle/mod-common.gradle: run — клиент и сервер,
+# run-data — датаген. Внутри мир, конфиги и логи конкретной машины.
+run/
+run-data/
+runs/
+logs/
+crash-reports/
+*.log
+
+# --- Артефакты ForgeGradle ------------------------------------------------
+# Распакованные и перемапленные копии игры и Forge: весят много, воспроизводятся сборкой.
+.forge/
+forge*changelog.txt
+forge_README.txt
+*.launch
+
+# --- IDE ------------------------------------------------------------------
+# IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+# Eclipse
+.settings/
+.metadata/
+.classpath
+.project
+eclipse/
+# VS Code
+.vscode/
+
+# --- Система --------------------------------------------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+Thumbs.db
+desktop.ini
+
+# --- Прочее ---------------------------------------------------------------
+*.orig
+*.rej
+*.bak
+*~
+
+# Личные разрешения Claude Code: у каждого свои, в общий репозиторий им не надо.
+# Общие настройки (.claude/settings.json) при этом коммитятся.
+.claude/settings.local.json

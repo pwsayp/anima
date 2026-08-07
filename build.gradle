@@ -1,0 +1,6 @@
+// Корневой проект ничего не собирает: он только держит общий плагин ForgeGradle,
+// чтобы подпроекты подключали его без повторного указания версии.
+// Вся общая логика сборки лежит в gradle/mod-common.gradle.
+plugins {
+    id 'net.minecraftforge.gradle' version '[7.0.17,8)' apply false
+}

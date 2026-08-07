@@ -1,0 +1,107 @@
+// Общая сборка для ядра и всех модов репозитория.
+// Подпроект задаёт в ext свои mod_id / mod_name / ... и подключает этот файл:
+//
+//   ext { mod_id = 'anima'; ... }
+//   apply from: rootProject.file('gradle/mod-common.gradle')
+//
+// Версии платформы (Minecraft/Forge) и версия ядра общие и лежат в корневом
+// gradle.properties.
+
+version = mod_version
+group = mod_group_id
+
+base {
+    archivesName = mod_id
+}
+
+// Mojang поставляет игрокам Java 25 начиная с 26.1, поэтому собираем под 25
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+// Подключаем сгенерированные ресурсы (датаген)
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+// На macOS GLFW обязан жить на первом потоке процесса, иначе клиент падает
+// ещё на окне загрузки Forge. providers.* — чтобы не ломать configuration cache.
+var isMacOs = providers.systemProperty('os.name').get().toLowerCase(Locale.ROOT).startsWith('mac')
+
+minecraft {
+    runs {
+        configureEach {
+            workingDir = layout.projectDirectory.dir('run')
+
+            systemProperty 'eventbus.api.strictRuntimeChecks', 'true'
+            systemProperty 'forge.enabledGameTestNamespaces', mod_id
+        }
+
+        register('client') {
+            if (isMacOs) {
+                jvmArgs '-XstartOnFirstThread'
+            }
+        }
+
+        register('server') {
+            args '--nogui'
+        }
+
+        register('gameTestServer')
+
+        register('data') {
+            workingDir = layout.projectDirectory.dir('run-data')
+
+            args '--mod', mod_id, '--all',
+                 '--output', layout.projectDirectory.dir('src/generated/resources'),
+                 '--existing', layout.projectDirectory.dir('src/main/resources')
+        }
+    }
+}
+
+repositories {
+    minecraft.mavenizer(it)
+    maven fg.forgeMaven
+    maven fg.minecraftLibsMaven
+    mavenCentral()
+}
+
+dependencies {
+    implementation minecraft.dependency("net.minecraftforge:forge:${forge_version}")
+    annotationProcessor 'net.minecraftforge:eventbus-validator:7.0.5'
+}
+
+// Подставляем версии из gradle.properties и ext в mods.toml и pack.mcmeta.
+// anima_version_range нужен модам: им ядро объявляется обязательной зависимостью.
+tasks.named('processResources', ProcessResources).configure {
+    var replacements = [
+        mod_id           : mod_id,
+        mod_name         : mod_name,
+        mod_version      : mod_version,
+        mod_license      : mod_license,
+        mod_authors      : mod_authors,
+        mod_description  : mod_description,
+        loader_version_range   : loader_version_range,
+        forge_version_range    : forge_version_range,
+        minecraft_version_range: minecraft_version_range,
+        anima_version_range    : anima_version_range,
+    ]
+
+    inputs.properties replacements
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+        expand replacements
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+jar {
+    manifest {
+        attributes([
+            'Specification-Title'     : mod_id,
+            'Specification-Vendor'    : mod_authors,
+            'Specification-Version'   : '1',
+            'Implementation-Title'    : project.name,
+            'Implementation-Version'  : project.version,
+            'Implementation-Vendor'   : mod_authors,
+        ])
+    }
+}

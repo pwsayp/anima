@@ -1,0 +1,18 @@
+plugins {
+    id 'java'
+    id 'idea'
+    id 'eclipse'
+    id 'net.minecraftforge.gradle'
+}
+
+ext {
+    mod_id = 'anima'
+    mod_name = 'Anima Core'
+    mod_group_id = 'com.pwsayp.anima'
+    mod_version = anima_version
+    mod_license = 'MIT'
+    mod_authors = 'pwsayp'
+    mod_description = 'The shared core of the Anima mods: utilities, config plumbing, common tags and the world event bus. It adds nothing to the game on its own — install it alongside the mods that need it.'
+}
+
+apply from: rootProject.file('gradle/mod-common.gradle')
