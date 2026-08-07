@@ -1,0 +1,24 @@
+plugins {
+    id 'java'
+    id 'idea'
+    id 'eclipse'
+    id 'net.minecraftforge.gradle'
+}
+
+ext {
+    mod_id = 'locusts'
+    mod_name = 'Locusts'
+    mod_group_id = 'com.pwsayp.locusts'
+    mod_version = '0.1.0'
+    mod_license = 'MIT'
+    mod_authors = 'pwsayp'
+    mod_description = 'A locust swarm crosses the land now and then: you hear it before you see it, it settles on the biggest field in its path, strips it in minutes and flies on. You cannot fight it off, only prepare — smoke from campfires, a roof over the beds, and chickens that eat what lands. Requires Anima Core.'
+}
+
+apply from: rootProject.file('gradle/mod-common.gradle')
+
+dependencies {
+    // Ядро: обзор вокруг зверя, заявки на блоки, дым костра, зелень и посевы.
+    // В jar не вкладывается — игрок ставит его отдельным файлом.
+    implementation project(':core')
+}
