@@ -43,6 +43,11 @@ public final class CrowsConfig {
             .comment("С какого расстояния ворона замечает игрока и улетает.")
             .defineInRange("scareDistance", 8.0D, 0.0D, 32.0D);
 
+    private static final ForgeConfigSpec.BooleanValue HOODED = BUILDER
+            .comment("Серая ворона вместо чёрной: серые спина и брюхо, чёрные голова, крылья и хвост.",
+                     "Та самая птица, которую видно из окна в средней полосе.")
+            .define("hooded", false);
+
     private static final ForgeConfigSpec.BooleanValue PERCH_ON_TREES = BUILDER
             .comment("Тянет ли ворон на деревья. Не найдя грядки, птица садится на ближайшую "
                    + "крону, а не болтается над поляной.")
@@ -72,6 +77,7 @@ public final class CrowsConfig {
     public static int peckTicks = 60;
     public static int searchRange = 12;
     public static double scareDistance = 8.0D;
+    public static boolean hooded = false;
     public static boolean perchOnTrees = true;
     public static int perchRange = 24;
     public static int perchTicks = 600;
@@ -86,6 +92,7 @@ public final class CrowsConfig {
         peckTicks = PECK_TICKS.get();
         searchRange = SEARCH_RANGE.get();
         scareDistance = SCARE_DISTANCE.get();
+        hooded = HOODED.get();
         perchOnTrees = PERCH_ON_TREES.get();
         perchRange = PERCH_RANGE.get();
         perchTicks = PERCH_TICKS.get();

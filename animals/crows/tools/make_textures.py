@@ -5,20 +5,21 @@
 
     python3 animals/crows/tools/make_textures.py
 
-Рисуются две вещи: развёртка вороны 64×32 под модель из CrowModel и яйцо призыва.
+Рисуются две развёртки вороны — чёрная и серая — и яйцо призыва.
 
-Про ворону. Она чёрная, но чёрное в игре — это ловушка: залитый одним цветом моб
-превращается в силуэт без формы, и с двух шагов не понять, где спина, а где крыло. Поэтому
-чернота здесь набрана из нескольких очень близких тонов, а по спине и сложенному крылу
-пущен синеватый отлив — тот самый, что виден на фото у настоящей вороны на солнце. Отлив
-слабый: он должен читаться как блеск пера, а не как раскраска.
+Про черноту. Чёрное в игре — ловушка: залитый одним цветом моб превращается в силуэт без
+формы, и с двух шагов не понять, где спина, а где крыло. Поэтому чернота набрана из
+нескольких очень близких тонов, а по спине и крылу пущен слабый синеватый отлив — тот
+самый блеск пера, что виден на фото. Отлив слабый: он должен читаться как блеск, а не как
+раскраска.
 
-Развёртка повторяет texOffs из модели: тело (0,0), голова (26,0), клюв (44,0),
-крыло (0,13), хвост (18,13), цевка (44,13), пальцы (48,13).
+Про серую ворону. Это не другой мод и не другая модель — только раскраска: серые спина,
+брюхо и шея при чёрных голове, крыльях и хвосте. Та самая птица, которую видно из окна в
+средней полосе.
 
-Про яйцо. Ванильные яйца призыва — это одна и та же форма в 16×16, у каждого моба своя
-раскраска: основной цвет и крап поверх него. Здесь ровно то же самое, силуэт снят с
-ванильного яйца пиксель в пиксель, цвета — вороньи.
+**Развёртка обязана совпадать с texOffs в CrowModel.java.** Числа продублированы здесь
+намеренно: скрипт и модель — разные языки, общего источника у них нет, и рассинхрон
+проявится сразу же кашей на текстуре.
 """
 import os
 import random
@@ -29,26 +30,61 @@ random.seed(20260807)
 
 OUT = 'animals/crows/src/main/resources/assets/crows/textures'
 
-# --- Ворона ----------------------------------------------------------------
-BODY = (26, 26, 30, 255)
-BACK = (20, 20, 24, 255)
-SHEEN = (52, 56, 72, 255)
-BREAST = (32, 32, 36, 255)
-HEAD = (24, 24, 28, 255)
+# --- Раскраски -------------------------------------------------------------
+# Роли: body — корпус, wing — крыло, head — голова, beak — клюв, tail — хвост,
+# leg — лапа. Отлив (sheen) кладётся поверх верхних граней корпуса и крыла.
+BLACK = {
+    'body': (26, 26, 30, 255),
+    'body_top': (20, 20, 24, 255),
+    'wing': (22, 22, 26, 255),
+    'head': (24, 24, 28, 255),
+    'throat': (20, 20, 23, 255),
+    'tail': (18, 18, 22, 255),
+    'beak': (44, 44, 48, 255),
+    'beak_dark': (28, 28, 32, 255),
+    'leg': (38, 38, 42, 255),
+    'sheen': (52, 56, 72, 255),
+}
+
+# Серая ворона: чёрные голова, крылья и хвост при светлом корпусе.
+HOODED = dict(BLACK)
+HOODED.update({
+    'body': (124, 124, 128, 255),
+    'body_top': (108, 108, 114, 255),
+    'sheen': (156, 156, 162, 255),
+})
+
 EYE = (12, 12, 14, 255)
 EYE_GLINT = (168, 168, 178, 255)
-BEAK = (44, 44, 48, 255)
-BEAK_DARK = (28, 28, 32, 255)
-WING = (22, 22, 26, 255)
-TAIL = (18, 18, 22, 255)
-LEG = (38, 38, 42, 255)
 
-# --- Яйцо ------------------------------------------------------------------
-EGG_BASE = (32, 32, 38, 255)
-EGG_LIGHT = (66, 70, 88, 255)
-EGG_RIM = (22, 22, 26, 255)
-EGG_RIM_DARK = (14, 14, 18, 255)
-EGG_SPOT = (74, 78, 96, 255)
+# --- Развёртки силуэтов ----------------------------------------------------
+# Каждая часть: имя роли и (u, v, ширина, высота, глубина) — ровно как в CrowModel.
+SHAPES = {
+    'layered': {
+        'body': (0, 0, 5, 5, 4),
+        'rump': (18, 0, 4, 4, 4),
+        'head': (34, 0, 3.5, 3.5, 3.5),
+        'wing': (48, 0, 1, 4, 4),
+        'primaries': (0, 9, 1, 3, 5),
+        'rectrices': (12, 9, 4, 1, 6),
+        'tail': (32, 9, 3, 1, 3),
+        'neck': (44, 9, 3, 3, 2),
+        'beak': (0, 17, 1.5, 1.5, 4),
+        'beak_lower': (28, 17, 1.5, 0.85, 3.5),
+        'shank': (12, 17, 1, 3, 1),
+        'toes': (17, 17, 2, 1, 3),
+    },
+}
+
+# Какой краской красить какую часть.
+ROLE = {
+    'body': 'body', 'rump': 'body', 'neck': 'body',
+    'wing': 'wing', 'primaries': 'wing',
+    'head': 'head', 'throat': 'throat',
+    'tail': 'tail', 'tail_tip': 'tail', 'rectrices': 'tail',
+    'beak': 'beak', 'beak_lower': 'beak', 'beak_tip': 'beak',
+    'shank': 'leg', 'toes': 'leg',
+}
 
 
 class Img:
@@ -61,8 +97,8 @@ class Img:
             self.px[y][x] = c
 
     def rect(self, x, y, w, h, c, noise=0):
-        for j in range(y, y + h):
-            for i in range(x, x + w):
+        for j in range(int(y), int(y + h + 0.999)):
+            for i in range(int(x), int(x + w + 0.999)):
                 self.set(i, j, shade(c, noise))
 
     def save(self, path):
@@ -94,99 +130,67 @@ def clamp(v):
     return max(0, min(255, v))
 
 
-class Box:
-    """Развёртка коробки W×H×D с texOffs (u,v) — та же раскладка, что у самой игры.
-
-    Верхний ряд: сверху (u+d, v) и снизу (u+d+w, v), оба w×d.
-    Нижний ряд: правый бок (u, v+d), перед (u+d, v+d), левый бок (u+d+w, v+d),
-    зад (u+d+w+d, v+d) — боковины d×h, перед и зад w×h.
-    """
-
-    def __init__(self, u, v, w, h, d):
-        self.u, self.v, self.w, self.h, self.d = u, v, w, h, d
-
-    def fill(self, img, colour, noise=0):
-        img.rect(self.u, self.v, 2 * self.d + 2 * self.w, self.d + self.h, colour, noise)
-
-    def top(self):
-        return self.u + self.d, self.v, self.w, self.d
-
-    def bottom(self):
-        return self.u + self.d + self.w, self.v, self.w, self.d
-
-    def right(self):
-        return self.u, self.v + self.d, self.d, self.h
-
-    def front(self):
-        return self.u + self.d, self.v + self.d, self.w, self.h
-
-    def left(self):
-        return self.u + self.d + self.w, self.v + self.d, self.d, self.h
-
-    def back(self):
-        return self.u + 2 * self.d + self.w, self.v + self.d, self.w, self.h
+def faces(u, v, w, h, d):
+    """Развёртка коробки — та же раскладка, что у самой игры."""
+    return {
+        'top': (u + d, v, w, d),
+        'bottom': (u + d + w, v, w, d),
+        'right': (u, v + d, d, h),
+        'front': (u + d, v + d, w, h),
+        'left': (u + d + w, v + d, d, h),
+        'back': (u + 2 * d + w, v + d, w, h),
+        'all': (u, v, 2 * d + 2 * w, d + h),
+    }
 
 
-def sheen(img, face, colour, density=3):
-    """Редкие светлые пиксели — блик на пере. Гуще к верхнему краю грани."""
+def sheen(img, face, colour):
+    """Редкие светлые пиксели — блик на пере, гуще к верхнему краю."""
     x, y, w, h = face
-    for j in range(h):
-        for i in range(w):
-            if (i * 7 + j * 5) % density == 0 and random.random() < 0.45 - j * 0.05:
-                img.set(x + i, y + j, shade(colour, 12))
+    for j in range(int(h)):
+        for i in range(int(w)):
+            if (i * 7 + j * 5) % 3 == 0 and random.random() < 0.4 - j * 0.06:
+                img.set(int(x) + i, int(y) + j, shade(colour, 12))
 
 
-def crow():
+def crow(shape, palette, name):
     img = Img(64, 32)
 
-    # Тело: спина темнее груди, по спине отлив.
-    body = Box(0, 0, 5, 5, 7)
-    body.fill(img, BODY, 5)
-    img.rect(*body.top(), BACK, 4)
-    sheen(img, body.top(), SHEEN)
-    img.rect(*body.front(), BREAST, 5)
-    img.rect(*body.bottom(), BREAST, 4)
+    for part, (u, v, w, h, d) in SHAPES[shape].items():
+        colour = palette[ROLE[part]]
+        f = faces(u, v, w, h, d)
+        img.rect(*f['all'], colour, 5)
 
-    # Голова: глаз сидит высоко и близко к клюву. На чёрной птице сам глаз почти не виден —
-    # весь он держится на одной светлой искре, как на фото. Два светлых пикселя вместо
-    # одного дают выпученный взгляд, поэтому искра ровно одна на щёку.
-    head = Box(26, 0, 4, 4, 4)
-    head.fill(img, HEAD, 5)
-    img.rect(*head.top(), BACK, 4)
-    for face, glint_at in ((head.right(), 0), (head.left(), 1)):
-        fx, fy, fw, fh = face
-        # Клюв смотрит в −Z: на правой грани перед — это левый край, на левой — правый.
-        eye_x = fx + (1 if glint_at == 0 else fw - 3)
-        img.rect(eye_x, fy + 1, 2, 2, EYE)
-        img.set(eye_x + glint_at, fy + 1, EYE_GLINT)
+        if part in ('body', 'rump', 'wing', 'primaries', 'head', 'neck'):
+            # Спина темнее боков, и по ней отлив: сверху птицу и видно.
+            img.rect(*f['top'], palette['body_top'] if part != 'head' else palette['head'], 4)
+            sheen(img, f['top'], palette['sheen'])
 
-    # Клюв: верх светлее, низ уходит в тень — так видно горбинку.
-    beak = Box(44, 0, 2, 2, 3)
-    beak.fill(img, BEAK, 4)
-    img.rect(*beak.bottom(), BEAK_DARK, 3)
+        if part in ('tail', 'tail_tip', 'rectrices'):
+            # Поперечная штриховка по перьям.
+            x, y, tw, th = f['top']
+            for i in range(0, int(tw), 2):
+                img.rect(x + i, y, 1, th, palette['body_top'], 5)
 
-    # Сложенное крыло: тёмное, с продольным отливом по верхнему краю.
-    wing = Box(0, 13, 1, 4, 8)
-    wing.fill(img, WING, 4)
-    for face in (wing.right(), wing.left()):
-        fx, fy, fw, fh = face
-        img.rect(fx, fy, fw, 1, BACK, 3)
-        sheen(img, (fx, fy, fw, 2), SHEEN, 2)
+        if part in ('beak', 'beak_tip', 'beak_lower'):
+            img.rect(*f['bottom'], palette['beak_dark'], 3)
 
-    # Хвост: самый тёмный, с поперечной штриховкой по перьям.
-    tail = Box(18, 13, 5, 1, 7)
-    tail.fill(img, TAIL, 4)
-    for face in (tail.top(), tail.bottom()):
-        fx, fy, fw, fh = face
-        for i in range(0, fw, 2):
-            img.rect(fx + i, fy, 1, fh, BACK, 5)
+        if part == 'head':
+            # Глаз почти не виден на чёрной голове — весь он держится на одной искре.
+            for face_name, glint in (('right', 0), ('left', 1)):
+                fx, fy, fw, fh = f[face_name]
+                eye_x = int(fx) + (1 if glint == 0 else int(fw) - 3)
+                img.rect(eye_x, int(fy) + 1, 2, 2, EYE)
+                img.set(eye_x + glint, int(fy) + 1, EYE_GLINT)
 
-    # Лапы.
-    Box(44, 13, 1, 3, 1).fill(img, LEG, 5)
-    Box(48, 13, 2, 1, 3).fill(img, LEG, 5)
+    img.save(os.path.join(OUT, f'entity/{name}.png'))
 
-    img.save(os.path.join(OUT, 'entity/crow.png'))
 
+# --- Яйцо ------------------------------------------------------------------
+EGG_BASE = (32, 32, 38, 255)
+EGG_LIGHT = (66, 70, 88, 255)
+EGG_RIM = (22, 22, 26, 255)
+EGG_RIM_DARK = (14, 14, 18, 255)
+EGG_SPOT = (74, 78, 96, 255)
 
 # Силуэт ванильного яйца призыва: для каждой строки — от какого до какого пикселя.
 EGG_SHAPE = {
@@ -194,7 +198,6 @@ EGG_SHAPE = {
     8: (2, 13), 9: (2, 13), 10: (2, 13), 11: (2, 13), 12: (3, 12), 13: (4, 11), 14: (5, 10),
 }
 
-# Крап поверх основного цвета: (x, y, ширина, высота).
 EGG_SPOTS = ((4, 3, 2, 1), (8, 4, 2, 2), (3, 7, 2, 1), (10, 7, 2, 1),
              (6, 9, 2, 2), (4, 11, 2, 1), (9, 11, 2, 1))
 
@@ -205,7 +208,6 @@ def egg():
     for y, (x0, x1) in EGG_SHAPE.items():
         for x in range(x0, x1 + 1):
             img.set(x, y, shade(EGG_BASE, 6))
-        # Ободок: слева и сверху светлее, справа и снизу глубже — так яйцо кажется круглым.
         img.set(x0, y, EGG_RIM)
         img.set(x1, y, EGG_RIM_DARK)
 
@@ -214,7 +216,6 @@ def egg():
     for x in range(*EGG_SHAPE[14]):
         img.set(x, 14, EGG_RIM_DARK)
 
-    # Блик сверху слева.
     img.rect(5, 3, 2, 2, EGG_LIGHT, 6)
     img.set(4, 5, EGG_LIGHT)
 
@@ -231,5 +232,6 @@ def egg():
 
 
 if __name__ == '__main__':
-    crow()
+    crow('layered', BLACK, 'crow')
+    crow('layered', HOODED, 'crow_hooded')
     egg()
