@@ -1,0 +1,7 @@
+{
+  "entity.crows.crow": "Crow",
+  "item.crows.crow_spawn_egg": "Crow Spawn Egg",
+  "subtitles.crows.crow.ambient": "Crow caws",
+  "subtitles.crows.crow.hurt": "Crow cries out",
+  "subtitles.crows.crow.death": "Crow falls silent"
+}

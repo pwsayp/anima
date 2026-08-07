@@ -1,0 +1,25 @@
+{
+  "entity.crow.ambient": {
+    "category": "neutral",
+    "subtitle": "subtitles.crows.crow.ambient",
+    "sounds": [
+      { "name": "crows:crow_ambient1", "volume": 0.8 },
+      { "name": "crows:crow_ambient2", "volume": 0.85 },
+      { "name": "crows:crow_ambient3", "volume": 0.85 }
+    ]
+  },
+  "entity.crow.hurt": {
+    "category": "neutral",
+    "subtitle": "subtitles.crows.crow.hurt",
+    "sounds": [
+      { "name": "crows:crow_hurt", "volume": 0.9 }
+    ]
+  },
+  "entity.crow.death": {
+    "category": "neutral",
+    "subtitle": "subtitles.crows.crow.death",
+    "sounds": [
+      { "name": "crows:crow_death", "volume": 0.9 }
+    ]
+  }
+}

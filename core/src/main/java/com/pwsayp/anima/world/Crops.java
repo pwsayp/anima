@@ -46,6 +46,43 @@ public final class Crops {
     }
 
     /**
+     * Насколько посев вырос: текущая стадия или {@code -1}, если это вообще не посев.
+     *
+     * <p>Нужна всем, кто выбирает, что клевать: у ворон интерес просыпается к почти
+     * налившемуся колосу, а не к ростку.</p>
+     */
+    public static int stage(final BlockState state) {
+        IntegerProperty age = age(state);
+        return age == null ? -1 : state.getValue(age);
+    }
+
+    /**
+     * Сколько всего стадий у этого посева, или {@code -1}, если это не посев.
+     *
+     * <p>Нужна, чтобы «только спелое» значило одно и то же для любой культуры: у пшеницы
+     * спелость это семь, у свёклы три. Правило вида «клевать с седьмой стадии» без этой
+     * поправки просто отменяло бы свёклу вовсе.</p>
+     */
+    public static int maxStage(final BlockState state) {
+        IntegerProperty age = age(state);
+        if (age == null) {
+            return -1;
+        }
+
+        int max = -1;
+        for (int value : age.getPossibleValues()) {
+            max = Math.max(max, value);
+        }
+        return max;
+    }
+
+    /** Дозрел ли посев до конца. */
+    public static boolean isRipe(final BlockState state) {
+        int max = maxStage(state);
+        return max >= 0 && stage(state) >= max;
+    }
+
+    /**
      * Откатить посев на одну стадию назад.
      *
      * <p>Вернёт {@code false}, если откатывать нечего — блок не посев или уже на нуле. Тогда
@@ -53,13 +90,30 @@ public final class Crops {
      * оставить их в покое.</p>
      */
     public static boolean rollback(final ServerLevel level, final BlockPos pos) {
+        return rollback(level, pos, 1);
+    }
+
+    /**
+     * Откатить посев сразу на несколько стадий.
+     *
+     * <p>Разница между зверьём тут не в жадности, а в повадке: саранча грызёт понемногу и
+     * часто, ворона отхватывает разом и улетает. Ниже нуля откат не уходит — сам росток
+     * остаётся в земле.</p>
+     */
+    public static boolean rollback(final ServerLevel level, final BlockPos pos, final int stages) {
         BlockState state = level.getBlockState(pos);
         IntegerProperty age = age(state);
-        if (age == null || state.getValue(age) <= 0) {
+        if (age == null || stages <= 0) {
             return false;
         }
 
-        level.setBlock(pos, state.setValue(age, state.getValue(age) - 1), Block.UPDATE_ALL);
+        int now = state.getValue(age);
+        int back = Math.max(0, now - stages);
+        if (back == now) {
+            return false;
+        }
+
+        level.setBlock(pos, state.setValue(age, back), Block.UPDATE_ALL);
         return true;
     }
 }

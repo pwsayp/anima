@@ -1,0 +1,7 @@
+{
+  "entity.crows.crow": "Ворона",
+  "item.crows.crow_spawn_egg": "Яйцо призыва вороны",
+  "subtitles.crows.crow.ambient": "Ворона каркает",
+  "subtitles.crows.crow.hurt": "Ворона вскрикивает",
+  "subtitles.crows.crow.death": "Ворона умолкает"
+}

@@ -13,3 +13,4 @@ include 'core'
 // только раскладка по смыслу, собственного build.gradle у них нет.
 
 include 'animals:locusts'
+include 'animals:crows'

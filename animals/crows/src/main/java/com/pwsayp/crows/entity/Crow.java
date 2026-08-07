@@ -1,0 +1,247 @@
+package com.pwsayp.crows.entity;
+
+import com.pwsayp.crows.Crows;
+import com.pwsayp.crows.CrowsConfig;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.control.FlyingMoveControl;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.PanicGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomFlyingGoal;
+import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.pathfinder.PathType;
+import net.minecraft.world.phys.Vec3;
+
+/**
+ * Ворона — маленькая пугливая птица, которая садится на почти созревшие грядки
+ * и склёвывает их, отбрасывая посев на несколько стадий роста назад.
+ *
+ * <p>Летающая часть устроена так же, как у ванильного попугая: {@link FlyingMoveControl}
+ * плюс {@link FlyingPathNavigation}, покачивание крыльев считается в {@link #aiStep()}
+ * и уезжает на клиент через состояние рендера.</p>
+ */
+public class Crow extends PathfinderMob {
+    /** Клюёт ли ворона прямо сейчас — нужно клиенту, чтобы наклонить голову. */
+    private static final EntityDataAccessor<Boolean> DATA_PECKING =
+            SynchedEntityData.defineId(Crow.class, EntityDataSerializers.BOOLEAN);
+
+    /**
+     * Голос вороны звучит как есть.
+     *
+     * <p>Раньше здесь стояло 0.62: карканья своего не было, и голос собирался из семплов
+     * попугая, приспущенных по высоте. Слышалось это не как птица, а как что-то большое в
+     * кустах — тон тянет за собой и длину, и тембр. Теперь у мода свои файлы, и трогать их
+     * высоту незачем; лёгкий разброс остаётся только чтобы стая не куковала в унисон.</p>
+     */
+    private static final float VOICE_PITCH = 1.0F;
+
+    /**
+     * Скорость взмаха, радиан в тик.
+     *
+     * <p>Ворона машет редко и глубоко — около трёх взмахов в секунду. Попугай и пчела
+     * трепещут вчетверо чаще, и именно от этого полёт вороны выглядел насекомым: дело было
+     * не в размахе крыла, а в частоте.</p>
+     */
+    private static final float BEAT_SPEED = 0.95F;
+
+    /** На планировании фаза почти стоит: крылья разведены и держат воздух. */
+    private static final float GLIDE_SPEED = 0.04F;
+
+    private static final float TAU = (float) (Math.PI * 2.0);
+
+    /** Фаза взмаха и её значение в прошлом тике — клиенту для плавности. */
+    public float wingPhase;
+    public float oWingPhase;
+
+    /** Планирует ли птица прямо сейчас: снижается ходом, не тратя взмахов. */
+    public boolean gliding;
+
+    public Crow(final EntityType<? extends Crow> type, final Level level) {
+        super(type, level);
+        this.moveControl = new FlyingMoveControl<>(this, 10, false);
+        this.setPathfindingMalus(PathType.FIRE_IN_NEIGHBOR, -1.0F);
+        this.setPathfindingMalus(PathType.FIRE, -1.0F);
+        this.setPathfindingMalus(PathType.COCOA, -1.0F);
+    }
+
+    public static AttributeSupplier.Builder createAttributes() {
+        return PathfinderMob.createMobAttributes()
+                .add(Attributes.MAX_HEALTH, 4.0)
+                .add(Attributes.FLYING_SPEED, 0.5)
+                .add(Attributes.MOVEMENT_SPEED, 0.2)
+                .add(Attributes.FOLLOW_RANGE, 24.0);
+    }
+
+    @Override
+    protected void registerGoals() {
+        this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(1, new PanicGoal(this, 1.5));
+        // Приоритет 2: увидел игрока — бросает грядку и улетает.
+        this.goalSelector.addGoal(2, new FleeFromPlayerGoal(this, 1.6));
+        this.goalSelector.addGoal(3, new EatCropGoal(this));
+        // Дерево важнее бесцельного полёта: не найдя грядки, ворона идёт не куда глаза
+        // глядят, а на ближайшую крону.
+        this.goalSelector.addGoal(4, new PerchOnTreeGoal(this));
+        this.goalSelector.addGoal(5, new WaterAvoidingRandomFlyingGoal(this, 1.0));
+        this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
+        this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
+    }
+
+    @Override
+    protected PathNavigation createNavigation(final Level level) {
+        FlyingPathNavigation navigation = new FlyingPathNavigation(this, level);
+        navigation.setCanOpenDoors(false);
+        navigation.setCanFloat(true);
+        return navigation;
+    }
+
+    @Override
+    protected void defineSynchedData(final SynchedEntityData.Builder entityData) {
+        super.defineSynchedData(entityData);
+        entityData.define(DATA_PECKING, false);
+    }
+
+    public boolean isPecking() {
+        return this.entityData.get(DATA_PECKING);
+    }
+
+    public void setPecking(final boolean pecking) {
+        this.entityData.set(DATA_PECKING, pecking);
+    }
+
+    public boolean isFlying() {
+        return !this.onGround();
+    }
+
+    @Override
+    public void aiStep() {
+        super.aiStep();
+        this.updateWings();
+    }
+
+    /**
+     * Взмахи крыльев по-вороньи.
+     *
+     * <p>Раньше здесь стояла попугайская механика: частота взмаха бралась от того, летит
+     * птица или нет, и разгонялась до трепета. У врановых полёт другой — редкие глубокие
+     * взмахи вперемежку с планированием, и узнаётся он именно по ритму.</p>
+     *
+     * <p>Планирование включается само: если птица снижается и при этом идёт вперёд, крылья
+     * замирают разведёнными. Оттуда же берётся мягкое снижение — планирующая ворона падает
+     * медленнее, чем камень, но быстрее порхающего попугая.</p>
+     */
+    private void updateWings() {
+        this.oWingPhase = this.wingPhase;
+
+        Vec3 movement = this.getDeltaMovement();
+        boolean airborne = !this.onGround() && !this.isPassenger();
+        this.gliding = airborne && movement.y < -0.02 && movement.horizontalDistanceSqr() > 0.0025;
+
+        float speed = !airborne ? 0.0F : (this.gliding ? GLIDE_SPEED : BEAT_SPEED);
+        this.wingPhase += speed;
+
+        if (airborne && movement.y < 0.0) {
+            this.setDeltaMovement(movement.multiply(1.0, this.gliding ? 0.85 : 0.75, 1.0));
+        }
+
+        // Шорох крыла — раз во взмах, на границе фазы. Отдельного семпла у нас нет,
+        // поэтому берётся тихий ванильный взмах, поднятый по высоте: на этой громкости он
+        // читается как шелест пера, а не как чужая птица.
+        if (airborne && !this.gliding && !this.level().isClientSide()
+                && (int) (this.oWingPhase / TAU) != (int) (this.wingPhase / TAU)) {
+            this.playSound(SoundEvents.PHANTOM_FLAP, 0.06F, 1.7F + this.random.nextFloat() * 0.2F);
+        }
+    }
+
+    @Override
+    protected boolean isFlapping() {
+        // Звук взмаха мод играет сам, по фазе крыла: ванильный расчёт завязан на пройденное
+        // расстояние и на планировании молчал бы невпопад.
+        return false;
+    }
+
+    @Override
+    protected boolean omnidirectionalAirMover() {
+        return true;
+    }
+
+    @Override
+    protected void checkFallDamage(final double ya, final boolean onGround, final BlockState onState, final BlockPos pos) {
+        // Птица. Не разбивается.
+    }
+
+    @Override
+    public SoundSource getSoundSource() {
+        return SoundSource.NEUTRAL;
+    }
+
+    @Override
+    public float getVoicePitch() {
+        return VOICE_PITCH + (this.random.nextFloat() - this.random.nextFloat()) * 0.1F;
+    }
+
+    @Override
+    public int getAmbientSoundInterval() {
+        return 200;
+    }
+
+    @Override
+    protected SoundEvent getAmbientSound() {
+        return Crows.CROW_AMBIENT.get();
+    }
+
+    @Override
+    protected SoundEvent getHurtSound(final DamageSource source) {
+        return Crows.CROW_HURT.get();
+    }
+
+    @Override
+    protected SoundEvent getDeathSound() {
+        return Crows.CROW_DEATH.get();
+    }
+
+    @Override
+    protected void playStepSound(final BlockPos pos, final BlockState blockState) {
+        this.playSound(SoundEvents.PARROT_STEP, 0.15F, VOICE_PITCH);
+    }
+
+    @Override
+    public boolean isPushable() {
+        return true;
+    }
+
+    @Override
+    public Vec3 getLeashOffset() {
+        return new Vec3(0.0, 0.5F * this.getEyeHeight(), this.getBbWidth() * 0.4F);
+    }
+
+    /** Ванильные условия для пассивного моба: светло и земля, на которой водятся животные. */
+    public static boolean checkCrowSpawnRules(
+            final EntityType<Crow> type, final LevelAccessor level,
+            final EntitySpawnReason spawnReason, final BlockPos pos, final RandomSource random) {
+        boolean brightEnough = EntitySpawnReason.ignoresLightRequirements(spawnReason)
+                || level.getRawBrightness(pos, 0) > 8;
+        return level.getBlockState(pos.below()).is(BlockTags.ANIMALS_SPAWNABLE_ON) && brightEnough;
+    }
+}

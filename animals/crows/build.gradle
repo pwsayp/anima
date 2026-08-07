@@ -1,0 +1,23 @@
+plugins {
+    id 'java'
+    id 'idea'
+    id 'eclipse'
+    id 'net.minecraftforge.gradle'
+}
+
+ext {
+    mod_id = 'crows'
+    mod_name = 'Crows'
+    mod_group_id = 'com.pwsayp.crows'
+    mod_version = '0.1.0'
+    mod_license = 'MIT'
+    mod_authors = 'pwsayp'
+    mod_description = 'Crows settle on fields and peck at wheat that is nearly ripe, setting it back a few growth stages. Nothing is destroyed and nothing drops — you lose time. Walk up to them and they scatter. Requires Anima Core.'
+}
+
+apply from: rootProject.file('gradle/mod-common.gradle')
+
+dependencies {
+    // Ядро: обращение с посевами и прочее общее знание о мире.
+    implementation project(':core')
+}
