@@ -3,7 +3,7 @@
 
 Запускать из корня репозитория:
 
-    python3 animals/locusts/tools/make_textures.py
+    python3 fauna/locusts/tools/make_textures.py
 
 Рисуются две вещи: развёртка саранчи 64×32 под модель из LocustModel и яйцо призыва.
 
@@ -29,7 +29,7 @@ import zlib
 
 random.seed(20260807)
 
-OUT = 'animals/locusts/src/main/resources/assets/locusts/textures'
+OUT = 'fauna/locusts/src/main/resources/assets/locusts/textures'
 
 # --- Саранча ---------------------------------------------------------------
 BODY = (196, 178, 126, 255)

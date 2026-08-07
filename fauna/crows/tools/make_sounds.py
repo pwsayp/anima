@@ -3,7 +3,7 @@
 
 Запускать из корня репозитория:
 
-    python3 animals/crows/tools/make_sounds.py <файл.mp3> [ещё файлы...]
+    python3 fauna/crows/tools/make_sounds.py <файл.mp3> [ещё файлы...]
 
 Зачем скрипт вообще нужен. Живая запись и звук мода — разные вещи. В записи карканье идёт
 серией, между криками ветер и птичья мелочь на заднем плане, длится всё это секундами. Если
@@ -31,7 +31,7 @@ import sys
 import tempfile
 import wave
 
-OUT = 'animals/crows/src/main/resources/assets/crows/sounds'
+OUT = 'fauna/crows/src/main/resources/assets/crows/sounds'
 
 RATE = 22050
 """Частота готового звука: ванильная грубоватость."""

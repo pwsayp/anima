@@ -3,7 +3,7 @@
 
 Запускать из корня репозитория:
 
-    python3 animals/crows/tools/make_textures.py
+    python3 fauna/crows/tools/make_textures.py
 
 Рисуются две развёртки вороны — чёрная и серая — и яйцо призыва.
 
@@ -28,7 +28,7 @@ import zlib
 
 random.seed(20260807)
 
-OUT = 'animals/crows/src/main/resources/assets/crows/textures'
+OUT = 'fauna/crows/src/main/resources/assets/crows/textures'
 
 # --- Раскраски -------------------------------------------------------------
 # Роли: body — корпус, wing — крыло, head — голова, beak — клюв, tail — хвост,

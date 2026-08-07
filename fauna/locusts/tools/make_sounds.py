@@ -3,7 +3,7 @@
 
 Запускать из корня репозитория:
 
-    python3 animals/locusts/tools/make_sounds.py <файл.mp3> [ещё файлы...]
+    python3 fauna/locusts/tools/make_sounds.py <файл.mp3> [ещё файлы...]
 
 Чем это отличается от такого же скрипта у ворон. Ворона кричит отдельными криками, и там
 задача была найти в записи один крик. У саранчи звук сплошной: стрекочет она без пауз, и
@@ -29,7 +29,7 @@ import sys
 import tempfile
 import wave
 
-OUT = 'animals/locusts/src/main/resources/assets/locusts/sounds'
+OUT = 'fauna/locusts/src/main/resources/assets/locusts/sounds'
 
 RATE = 22050
 PEAK = 0.85

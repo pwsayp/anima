@@ -78,7 +78,7 @@ tools/make_textures.py    — генератор PNG-текстур (см. ни�
 так проще править цвета и не расходиться с развёрткой модели. Запускать из корня репозитория:
 
 ```bash
-python3 animals/crows/tools/make_textures.py
+python3 fauna/crows/tools/make_textures.py
 ```
 
 Регионы развёртки (32×32) и их соответствие кубам модели описаны в комментарии
@@ -101,7 +101,7 @@ python3 animals/crows/tools/make_textures.py
 Звуки пересобираются скриптом из исходных записей:
 
 ```bash
-python3 animals/crows/tools/make_sounds.py путь/к/записи.mp3 ...
+python3 fauna/crows/tools/make_sounds.py путь/к/записи.mp3 ...
 ```
 
 ## Модель и текстура
@@ -118,14 +118,14 @@ python3 animals/crows/tools/make_sounds.py путь/к/записи.mp3 ...
 Текстуры генерируются скриптом (запускать из корня репозитория):
 
 ```bash
-python3 animals/crows/tools/make_textures.py
+python3 fauna/crows/tools/make_textures.py
 ```
 
 ## Сборка
 
 ```bash
-./gradlew :animals:crows:build
+./gradlew :fauna:crows:build
 ```
 
-Готовый jar: `animals/crows/build/libs/crows-0.1.0.jar`. Ядро собирается отдельно:
+Готовый jar: `fauna/crows/build/libs/crows-0.1.0.jar`. Ядро собирается отдельно:
 `./gradlew :core:build`.

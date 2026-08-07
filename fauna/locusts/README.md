@@ -107,7 +107,7 @@
 Звуки пересобираются скриптом из исходных записей:
 
 ```bash
-python3 animals/locusts/tools/make_sounds.py путь/к/записи.mp3 ...
+python3 fauna/locusts/tools/make_sounds.py путь/к/записи.mp3 ...
 ```
 
 ## Настройки
@@ -157,14 +157,14 @@ python3 animals/locusts/tools/make_sounds.py путь/к/записи.mp3 ...
 Текстуры генерируются скриптом (запускать из корня репозитория):
 
 ```bash
-python3 animals/locusts/tools/make_textures.py
+python3 fauna/locusts/tools/make_textures.py
 ```
 
 ## Сборка
 
 ```bash
-./gradlew :animals:locusts:build
+./gradlew :fauna:locusts:build
 ```
 
-Готовый jar: `animals/locusts/build/libs/locusts-0.1.0.jar`. Ядро собирается отдельно:
+Готовый jar: `fauna/locusts/build/libs/locusts-0.1.0.jar`. Ядро собирается отдельно:
 `./gradlew :core:build`.
