@@ -15,8 +15,9 @@
 Крылья полупрозрачные, как стекло с прожилками, — поэтому модель рисуется полупрозрачным
 слоем (см. LocustModel). Всё остальное непрозрачно: сквозь тело просвечивать нечему.
 
-Развёртка повторяет texOffs из модели: тело (0,0), крыло (17,0), переднеспинка (36,0),
-голова (48,0), бедро (0,9), голень (9,9), лапка (18,9), усик (23,9).
+Развёртка повторяет texOffs из модели: брюшко (0,0), хвост (0,9), крыло (16,0),
+переднеспинка (36,0), голова (50,0), бедро (0,15), голень (12,15), лапка (22,15),
+усик (26,15).
 
 Про яйцо. Ванильные яйца призыва — это одна и та же форма в 16×16, у каждого моба своя
 раскраска: основной цвет и крап поверх него. Здесь ровно то же самое, силуэт снят с
@@ -65,8 +66,8 @@ class Img:
             self.px[y][x] = c
 
     def rect(self, x, y, w, h, c, noise=0):
-        for j in range(y, y + h):
-            for i in range(x, x + w):
+        for j in range(int(y), int(y + h + 0.999)):
+            for i in range(int(x), int(x + w + 0.999)):
                 self.set(i, j, shade(c, noise))
 
     def save(self, path):
@@ -134,6 +135,7 @@ class Box:
 def speckle(img, face, colour, step=2, offset=0):
     """Тёмная клетка по боку: через пиксель, со сдвигом ряда — так читается пестрядь."""
     x, y, w, h = face
+    x, y, w, h = int(x), int(y), int(w + 0.999), int(h + 0.999)
     for j in range(h):
         for i in range(w):
             if (i + j * offset) % step == 0:
@@ -143,19 +145,24 @@ def speckle(img, face, colour, step=2, offset=0):
 def locust():
     img = Img(64, 32)
 
-    # Брюшко: спина темнее, бока в тёмную клетку.
-    body = Box(0, 0, 2, 2, 6)
+    # Брюшко: спина темнее, бока в тёмную клетку — по ней саранча и узнаётся сбоку.
+    body = Box(0, 0, 2, 2, 5)
     body.fill(img, BODY, 8)
     img.rect(*body.top(), BODY_TOP, 6)
     speckle(img, body.right(), MARK, 2, 1)
     speckle(img, body.left(), MARK, 2, 1)
 
+    # Суженный хвост брюшка.
+    tip = Box(0, 8, 1, 1.5, 2)
+    tip.fill(img, BODY, 6)
+    img.rect(*tip.top(), BODY_TOP, 5)
+
     # Крылья: полупрозрачная плёнка с продольной прожилкой и редким тёмным крапом.
     # Толщина у крыла 0.5, поэтому под развёртку берём целую строку — торцы её и займут.
-    wing = Box(17, 0, 3, 1, 6)
+    wing = Box(16, 0, 2, 1, 7)
     wing.fill(img, WING, 5)
     for face in (wing.top(), wing.bottom()):
-        fx, fy, fw, fh = face
+        fx, fy, fw, fh = int(face[0]), int(face[1]), int(face[2]), int(face[3])
         # Прожилка вдоль переднего края — то, за что крыло цепляется взглядом.
         img.rect(fx, fy, 1, fh, WING_VEIN, 8)
         for j in range(fy, fy + fh, 2):
@@ -163,39 +170,45 @@ def locust():
         img.set(fx + 1, fy + 1, shade(WING_MARK, 10))
         img.set(fx + 1, fy + fh - 2, shade(WING_MARK, 10))
 
-    # Переднеспинка: горб с тёмным килем по хребту.
-    thorax = Box(36, 0, 3, 3, 3)
+    # Летательная пара: шире надкрылий и прозрачнее — она и машет.
+    hindwing = Box(36, 0, 3, 0.5, 5)
+    hindwing.fill(img, WING, 4)
+    wingface(img, hindwing, dense=False)
+
+    # Переднеспинка: щит с тёмным килем по хребту и тёмной каймой по нижнему краю —
+    # так видно, что бока у неё провисают, а не срезаны.
+    thorax = Box(36, 6, 3, 2.5, 3)
     thorax.fill(img, THORAX, 7)
     x, y, w, h = thorax.top()
-    img.rect(x + w // 2, y, 1, h, BODY_TOP, 5)
+    img.rect(int(x + w // 2), y, 1, h, BODY_TOP, 5)
     for face in (thorax.right(), thorax.left()):
         fx, fy, fw, fh = face
-        img.rect(fx, fy + fh - 1, fw, 1, MARK, 8)
+        img.rect(fx, int(fy + fh) - 1, fw, 1, MARK, 8)
 
     # Голова: глаз во всю щёку с искрой — у саранчи он именно такой.
-    head = Box(48, 0, 2, 2, 2)
+    head = Box(50, 6, 2.5, 2.5, 2)
     head.fill(img, HEAD, 6)
     for face in (head.right(), head.left()):
         fx, fy, fw, fh = face
         img.rect(fx, fy, fw, fh, EYE, 6)
-        img.set(fx, fy, EYE_GLINT)
+        img.set(int(fx), int(fy), EYE_GLINT)
 
     # Задняя нога: бедро в тёмную ёлочку, голень светлая с тёмным концом.
-    femur = Box(0, 9, 1, 1, 3)
+    femur = Box(0, 13, 1.5, 2, 4)
     femur.fill(img, LEG, 6)
     speckle(img, femur.right(), LEG_MARK, 2, 0)
     speckle(img, femur.left(), LEG_MARK, 2, 0)
     speckle(img, femur.top(), LEG_MARK, 2, 0)
 
-    shin = Box(9, 9, 1, 1, 3)
+    shin = Box(12, 13, 0.5, 0.5, 4)
     shin.fill(img, LEG, 5)
     for face in (shin.right(), shin.left(), shin.top()):
         fx, fy, fw, fh = face
-        img.rect(fx + fw - 1, fy, 1, fh, LEG_MARK, 6)
+        img.rect(int(fx + fw) - 1, fy, 1, fh, LEG_MARK, 6)
 
-    # Мелкие лапки и усики. Усик 0.5×0.5×2 занимает по развёртке 5×3.
-    Box(18, 9, 1, 2, 1).fill(img, LEG, 6)
-    img.rect(23, 9, 5, 3, LEG_MARK, 8)
+    # Мелкие лапки и усики.
+    Box(22, 13, 0.5, 2, 0.5).fill(img, LEG, 6)
+    img.rect(26, 13, 6, 3, LEG_MARK, 8)
 
     img.save(os.path.join(OUT, 'entity/locust.png'))
 
@@ -242,23 +255,42 @@ def egg():
     img.save(os.path.join(OUT, 'item/locust_spawn_egg.png'))
 
 
-# Сбитая особь боком: голова слева, брюшко вправо, задняя нога «домиком» вниз.
-# Читаться должно с одного взгляда в слоте инвентаря, поэтому силуэт грубый и крупный.
-#   a усик, h голова, E глаз, t переднеспинка, b брюшко, w крыло, f бедро, g голень, l лапка
+def wingface(img, box, dense=True):
+    """Плёнка крыла: прожилка по переднему краю и редкий крап."""
+    for face in (box.top(), box.bottom()):
+        fx, fy, fw, fh = int(face[0]), int(face[1]), int(face[2]), int(face[3])
+        img.rect(fx, fy, 1, fh, WING_VEIN, 8)
+        if not dense:
+            continue
+        for j in range(fy, fy + fh, 2):
+            img.set(fx + fw - 1, j, shade(WING_MARK, 10))
+        img.set(fx + 1, fy + 1, shade(WING_MARK, 10))
+        img.set(fx + 1, fy + fh - 2, shade(WING_MARK, 10))
+
+
+# Сбитая особь боком: голова слева, толстое бедро горбом над телом, тонкая голень вниз.
+# Формы нарочно крупные и слитные — так рисованы ванильные предметы еды: издалека читается
+# силуэт, а не штриховка. Мелкие детали в слоте инвентаря всё равно превращаются в кашу.
+#   a усик, h голова, E глаз, b тело, w крыло, f бедро, g голень, l передняя лапка
+#
+# Между двумя крайностями: у первой версии был штриховой рисунок в один пиксель — в слоте
+# каша; у второй тело слиплось в глухой ком, а бедро читалось заячьим окороком, отчего
+# саранча выходила кроликом. Здесь тело тоньше и длиннее, вдоль спины идёт светлое крыло —
+# оно и говорит «насекомое», — а нога отделена от тела просветом и уходит вниз за брюшко.
 ITEM_SHAPE = (
     '................',
     '................',
-    '...a............',
-    '....a...........',
-    '....hh..wwwwww..',
-    '...hEhtttbbbbb..',
-    '...hhhtttbbbbbb.',
-    '....llttfbbbbb..',
-    '.....l..ff......',
-    '........ff......',
+    '..a.............',
+    '...a......ff....',
+    '..hh.....ff.....',
+    '.hEh...wffbbb...',
+    '..hhwwwwwbbbbb..',
+    '..bbbbbbbbbbbb..',
+    '...bbbbbbbbbb...',
+    '....l...g.......',
+    '...l....g.......',
     '.........gg.....',
-    '..........gg....',
-    '...........g....',
+    '..........g.....',
     '................',
     '................',
     '................',
@@ -268,34 +300,53 @@ RAW_PALETTE = {
     'a': (104, 84, 50, 255),
     'h': (200, 184, 136, 255),
     'E': (54, 44, 32, 255),
-    't': (188, 168, 116, 255),
     'b': (196, 178, 126, 255),
-    'w': (206, 202, 186, 255),
-    'f': (206, 192, 148, 255),
-    'g': (176, 160, 116, 255),
+    'w': (214, 206, 180, 255),
+    'f': (176, 158, 106, 255),
+    'g': (168, 152, 108, 255),
     'l': (186, 172, 130, 255),
 }
 
-# Жареная: то же самое, но пропечённое до тёмно-медового, а крылья ссохлись и потемнели.
+# Жареная: то же самое, но пропечённое до тёмно-медового.
 COOKED_PALETTE = {
     'a': (72, 52, 30, 255),
     'h': (156, 116, 62, 255),
     'E': (44, 32, 22, 255),
-    't': (142, 102, 54, 255),
     'b': (150, 108, 58, 255),
-    'w': (128, 96, 56, 255),
-    'f': (162, 122, 68, 255),
-    'g': (134, 98, 52, 255),
+    'w': (176, 140, 84, 255),
+    'f': (132, 94, 48, 255),
+    'g': (126, 92, 48, 255),
     'l': (146, 108, 60, 255),
 }
 
 
-def item(palette, name, noise=8):
+def tone(c, factor):
+    return (clamp(int(c[0] * factor)), clamp(int(c[1] * factor)), clamp(int(c[2] * factor)), c[3])
+
+
+def item(palette, name, noise=6):
+    """Нарисовать предмет и огранить его, как ванильные: тень снизу-справа, свет сверху-слева.
+
+    Объём в ванильных иконках держится не на обводке, а именно на этих двух каёмках —
+    поэтому они считаются от формы, а не рисуются руками.
+    """
     img = Img(16, 16)
-    for y, row in enumerate(ITEM_SHAPE):
-        for x, code in enumerate(row):
-            if code != '.':
-                img.set(x, y, shade(palette[code], 0 if code == 'E' else noise))
+    filled = {(x, y): code
+              for y, row in enumerate(ITEM_SHAPE)
+              for x, code in enumerate(row) if code != '.'}
+
+    for (x, y), code in filled.items():
+        colour = palette[code]
+        if code != 'E':
+            shadow = (x + 1, y) not in filled or (x, y + 1) not in filled
+            light = (x - 1, y) not in filled or (x, y - 1) not in filled
+            if shadow:
+                colour = tone(colour, 0.72)
+            elif light:
+                colour = tone(colour, 1.12)
+            colour = shade(colour, noise)
+        img.set(x, y, colour)
+
     img.save(os.path.join(OUT, f'item/{name}.png'))
 
 
