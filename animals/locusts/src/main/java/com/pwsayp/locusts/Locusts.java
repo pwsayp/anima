@@ -6,6 +6,8 @@ import com.pwsayp.anima.world.Smoke;
 import com.pwsayp.locusts.entity.Locust;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -46,6 +48,41 @@ public final class Locusts {
             DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, MODID);
     private static final DeferredRegister<Item> ITEMS =
             DeferredRegister.create(ForgeRegistries.ITEMS, MODID);
+    private static final DeferredRegister<SoundEvent> SOUNDS =
+            DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, MODID);
+
+    /**
+     * Голос саранчи — свой, а не пчелиный.
+     *
+     * <p>Раньше особь звучала семплами пчелы, поднятыми по высоте: получался улей, а не
+     * поле. Стрёкот у прямокрылых сухой и трескучий, и подделать его чужим тоном нельзя —
+     * высота тянет за собой и длину, и тембр.</p>
+     */
+    public static final RegistryObject<SoundEvent> LOCUST_AMBIENT = SOUNDS.register(
+            "entity.locust.ambient",
+            () -> SoundEvent.createVariableRangeEvent(
+                    Identifier.fromNamespaceAndPath(MODID, "entity.locust.ambient")));
+
+    public static final RegistryObject<SoundEvent> LOCUST_HURT = SOUNDS.register(
+            "entity.locust.hurt",
+            () -> SoundEvent.createVariableRangeEvent(
+                    Identifier.fromNamespaceAndPath(MODID, "entity.locust.hurt")));
+
+    public static final RegistryObject<SoundEvent> LOCUST_DEATH = SOUNDS.register(
+            "entity.locust.death",
+            () -> SoundEvent.createVariableRangeEvent(
+                    Identifier.fromNamespaceAndPath(MODID, "entity.locust.death")));
+
+    /**
+     * Гул подходящей стаи — та самая фора, ради которой всё затевалось.
+     *
+     * <p>Играется один раз, когда налёт только выпущен в стороне от поля, и слышен далеко.
+     * Это единственное предупреждение игроку: услышал — беги жать.</p>
+     */
+    public static final RegistryObject<SoundEvent> SWARM_APPROACH = SOUNDS.register(
+            "event.swarm_approach",
+            () -> SoundEvent.createVariableRangeEvent(
+                    Identifier.fromNamespaceAndPath(MODID, "event.swarm_approach")));
 
     public static final RegistryObject<EntityType<Locust>> LOCUST = ENTITY_TYPES.register(
             "locust",
@@ -97,6 +134,7 @@ public final class Locusts {
         BusGroup modBus = context.getModBusGroup();
         ENTITY_TYPES.register(modBus);
         ITEMS.register(modBus);
+        SOUNDS.register(modBus);
         context.registerConfig(ModConfig.Type.COMMON, LocustsConfig.SPEC);
     }
 

@@ -2,5 +2,9 @@
   "entity.locusts.locust": "Саранча",
   "item.locusts.locust": "Сырая саранча",
   "item.locusts.cooked_locust": "Жареная саранча",
-  "item.locusts.locust_spawn_egg": "Яйцо призыва саранчи"
+  "item.locusts.locust_spawn_egg": "Яйцо призыва саранчи",
+  "subtitles.locusts.locust.ambient": "Саранча стрекочет",
+  "subtitles.locusts.locust.hurt": "Саранча трещит",
+  "subtitles.locusts.locust.death": "Саранча умолкает",
+  "subtitles.locusts.swarm.approach": "Приближается саранча"
 }

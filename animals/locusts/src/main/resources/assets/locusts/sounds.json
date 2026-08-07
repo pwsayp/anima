@@ -1,0 +1,32 @@
+{
+  "entity.locust.ambient": {
+    "category": "neutral",
+    "subtitle": "subtitles.locusts.locust.ambient",
+    "sounds": [
+      { "name": "locusts:locust_ambient1", "volume": 0.35 },
+      { "name": "locusts:locust_ambient2", "volume": 0.35 },
+      { "name": "locusts:locust_ambient3", "volume": 0.35 }
+    ]
+  },
+  "entity.locust.hurt": {
+    "category": "neutral",
+    "subtitle": "subtitles.locusts.locust.hurt",
+    "sounds": [
+      { "name": "locusts:locust_hurt", "volume": 0.5 }
+    ]
+  },
+  "entity.locust.death": {
+    "category": "neutral",
+    "subtitle": "subtitles.locusts.locust.death",
+    "sounds": [
+      { "name": "locusts:locust_death", "volume": 0.5 }
+    ]
+  },
+  "event.swarm_approach": {
+    "category": "hostile",
+    "subtitle": "subtitles.locusts.swarm.approach",
+    "sounds": [
+      { "name": "locusts:swarm_approach", "volume": 1.0 }
+    ]
+  }
+}

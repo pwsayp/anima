@@ -1,12 +1,13 @@
 package com.pwsayp.locusts.entity;
 
+import com.pwsayp.locusts.Locusts;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PathfinderMob;
@@ -195,22 +196,29 @@ public class Locust extends PathfinderMob {
 
     @Override
     protected SoundEvent getAmbientSound() {
-        return SoundEvents.BEE_LOOP;
+        return Locusts.LOCUST_AMBIENT.get();
     }
 
     @Override
     protected SoundEvent getHurtSound(final DamageSource source) {
-        return SoundEvents.BEE_HURT;
+        return Locusts.LOCUST_HURT.get();
     }
 
     @Override
     protected SoundEvent getDeathSound() {
-        return SoundEvents.BEE_DEATH;
+        return Locusts.LOCUST_DEATH.get();
     }
 
+    /**
+     * Высота голоса своя у каждой особи.
+     *
+     * <p>Раньше стрёкот был пчелиным семплом, поднятым в 1.4 раза, — оттого стая и звучала
+     * как разъярённый улей. Теперь звук настоящий, и трогать его высоту незачем; разброс
+     * оставлен небольшой, только чтобы полторы сотни особей не стрекотали в унисон.</p>
+     */
     @Override
     public float getVoicePitch() {
-        return super.getVoicePitch() * 1.4F;
+        return 0.9F + this.random.nextFloat() * 0.25F;
     }
 
     @Override

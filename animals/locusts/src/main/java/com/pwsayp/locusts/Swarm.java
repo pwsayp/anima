@@ -9,7 +9,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.state.BlockState;
@@ -188,7 +187,7 @@ public final class Swarm {
         }
 
         // Слышно раньше, чем видно: это и есть та фора, ради которой всё затевалось.
-        level.playSound(null, BlockPos.containing(from), SoundEvents.BEE_LOOP_AGGRESSIVE,
-                SoundSource.HOSTILE, 6.0F, 0.6F);
+        level.playSound(null, BlockPos.containing(from), Locusts.SWARM_APPROACH.get(),
+                SoundSource.HOSTILE, 7.0F, 1.0F);
     }
 }

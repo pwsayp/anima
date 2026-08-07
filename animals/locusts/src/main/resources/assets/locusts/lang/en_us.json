@@ -2,5 +2,9 @@
   "entity.locusts.locust": "Locust",
   "item.locusts.locust": "Raw Locust",
   "item.locusts.cooked_locust": "Cooked Locust",
-  "item.locusts.locust_spawn_egg": "Locust Spawn Egg"
+  "item.locusts.locust_spawn_egg": "Locust Spawn Egg",
+  "subtitles.locusts.locust.ambient": "Locust chirrs",
+  "subtitles.locusts.locust.hurt": "Locust rasps",
+  "subtitles.locusts.locust.death": "Locust falls silent",
+  "subtitles.locusts.swarm.approach": "Locust swarm approaches"
 }
